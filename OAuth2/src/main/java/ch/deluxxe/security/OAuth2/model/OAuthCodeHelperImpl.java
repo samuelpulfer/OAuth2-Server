@@ -42,7 +42,7 @@ public class OAuthCodeHelperImpl implements OAuthCodeHelper {
 		try {
 			conn = ds.getConnection();
 
-			ps = conn.prepareStatement("SELECT userstorolesid FROM v_roles WHERE username=? AND application=? AND role=?");
+			ps = conn.prepareStatement("SELECT userstorolesid FROM v_roles WHERE username=? AND appname=? AND rolename=?");
 			ps.setString(1, username);
 			ps.setString(2, application);
 			ps.setString(3, role);
