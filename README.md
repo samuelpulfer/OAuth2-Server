@@ -1,4 +1,4 @@
-# OAuth2-Server
+# Vanilla OAuth2-Server
 OAuth2 Server written in Java
 
 Installation:
