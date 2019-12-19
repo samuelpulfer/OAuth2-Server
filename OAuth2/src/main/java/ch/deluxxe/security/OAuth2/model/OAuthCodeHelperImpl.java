@@ -1,15 +1,21 @@
 package ch.deluxxe.security.OAuth2.model;
 
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Base64;
 import java.util.Random;
+import java.util.UUID;
 
 import javax.naming.Context;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
 import javax.sql.DataSource;
+
+import org.json.JSONObject;
 
 import ch.deluxxe.security.OAuth2.model.iface.OAuthCodeHelper;
 
@@ -17,10 +23,61 @@ public class OAuthCodeHelperImpl implements OAuthCodeHelper {
 	
 	final static char[] chars = {'a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z',
 								'A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z',
-								'0','1','2','3','4','5','6','7','8','9','-','_'
+								'0','1','2','3','4','5','6','7','8','9'
 								};
 	
+	private class OAuthCodePairImpl implements OAuthCodePair {
+
+		private String accessCode = null;
+		private String refreshCode = null;
+		private String secret = null;
+		private String username = null;
+		
+		public OAuthCodePairImpl() {
+			accessCode = codeGenerator();
+			refreshCode = codeGenerator();
+		}
+		public void setSecret(String secret) {
+			this.secret = secret;
+		}
+		public void setUsername(String username) {
+			this.username = username;
+		}
+		
+		@Override
+		public String getAccessToken() {
+			return accessCode;
+		}
+
+		@Override
+		public String getRefreshToken() {
+			return refreshCode;
+		}
+		@Override
+		public String getJWTAccessToken() {
+			JSONObject jo = JWTHelper.payload(18000, username, accessCode);
+			try {
+				return jwt.getTokenHMAC(jo, secret);
+			} catch (InvalidKeyException | NoSuchAlgorithmException e) {
+				e.printStackTrace();
+				return null;
+			}
+		}
+		@Override
+		public String getJWTRefreshToken() {
+			JSONObject jo = JWTHelper.payload(1209600, username, refreshCode);
+			try {
+				return jwt.getTokenHMAC(jo, secret);
+			} catch (InvalidKeyException | NoSuchAlgorithmException e) {
+				e.printStackTrace();
+				return null;
+			}
+		}
+		
+	}
+	
 	private DataSource ds;
+	private JWTHelper jwt = null;
 	
 	public OAuthCodeHelperImpl() {
 		try {
@@ -30,11 +87,14 @@ public class OAuthCodeHelperImpl implements OAuthCodeHelper {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		jwt = new JWTHelper();
 	}
 
 	@Override
-	public String getCode(String username, String application, String role) {
+	public String getAuthCode(String username, String application, String role) {
 		String code = codeGenerator();
+		JSONObject jo = JWTHelper.payload(300, username, code);
+		
 		Connection conn = null;
 		PreparedStatement ps = null;
 		ResultSet rs = null;
@@ -42,25 +102,121 @@ public class OAuthCodeHelperImpl implements OAuthCodeHelper {
 		try {
 			conn = ds.getConnection();
 
-			ps = conn.prepareStatement("SELECT userstorolesid FROM v_roles WHERE username=? AND appname=? AND rolename=?");
+			ps = conn.prepareStatement("SELECT userstorolesid, secret FROM v_roles WHERE username=? AND appname=? AND rolename=?");
 			ps.setString(1, username);
 			ps.setString(2, application);
 			ps.setString(3, role);
 			rs = ps.executeQuery();
 			if(rs.next()) {
 				int roleId = rs.getInt("userstorolesid");
+				String secret = rs.getString("secret");
 				ps.close();
 				ps = conn.prepareStatement("UPDATE authcode SET expiration = CURRENT_TIMESTAMP WHERE fk_nn_users_roles=? AND redeemed IS NULL AND expiration > CURRENT_TIMESTAMP");
 				ps.setInt(1, roleId);
 				ps.executeUpdate();
 				ps.close();
-				ps = conn.prepareStatement("INSERT INTO authcode (authcode,expiration,fk_nn_users_roles) VALUES (?,(CURRENT_TIMESTAMP + (10 * INTERVAL '1 minute')),?)");
+				ps = conn.prepareStatement("INSERT INTO authcode (authcode,expiration,fk_nn_users_roles) VALUES (?,(CURRENT_TIMESTAMP + (5 * INTERVAL '1 minute')),?)");
 				ps.setString(1, code);
 				ps.setInt(2, roleId);
 				ps.execute();
-				return code;
+				return jwt.getTokenHMAC(jo, secret);
 			}
 			
+		} catch (SQLException | InvalidKeyException | NoSuchAlgorithmException e) {
+			System.out.println("Exception in getAuthCode(): " + e.getMessage());
+		} finally {
+			try {
+				rs.close();
+			} catch (Exception e) {
+			}
+			try {
+				ps.close();
+			} catch (Exception e) {
+			}
+			try {
+				conn.close();
+			} catch (Exception e) {
+			}
+		}
+		return null;
+	}
+	
+
+
+	@Override
+	public OAuthCodePair getToken(String code, GrantType grantType) {
+		OAuthCodePairImpl newcode = new OAuthCodePairImpl();
+		
+		JSONObject jo = new JSONObject(new String(Base64.getUrlDecoder().decode(code.split("\\.")[1])));
+		System.out.println(jo);
+		String jti = jo.getString("jti");
+		System.out.println(jti);
+		
+		Connection conn = null;
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+		
+		try {
+			conn = ds.getConnection();
+			
+			if(grantType.equals(GrantType.authorization_code)) {
+				ps = conn.prepareStatement("SELECT authcode, secret, username FROM v_authcode WHERE authcode=? AND expiration > CURRENT_TIMESTAMP AND redeemed IS NULL");
+				ps.setString(1, jti);
+				rs = ps.executeQuery();
+				if(rs.next()) {
+					newcode.setSecret(rs.getString("secret"));
+					newcode.setUsername(rs.getString("username"));
+					rs.close();
+					ps.close();
+					ps = conn.prepareStatement("UPDATE authcode SET redeemed = CURRENT_TIMESTAMP WHERE authcode=?");
+					ps.setString(1, jti);
+					ps.executeUpdate();
+					ps.close();
+					ps = conn.prepareStatement("INSERT INTO accesstoken (accesstoken, fk_authcode, expiration) VALUES (?,?,(CURRENT_TIMESTAMP + (300 * INTERVAL '1 minute')))");
+					ps.setString(1, newcode.getAccessToken());
+					ps.setString(2, jti);
+					ps.executeUpdate();
+					ps.close();
+					ps = conn.prepareStatement("INSERT INTO refreshtoken (refreshtoken, fk_authcode, expiration) VALUES (?,?,(CURRENT_TIMESTAMP + (20160 * INTERVAL '1 minute')))");
+					ps.setString(1, newcode.getRefreshToken());
+					ps.setString(2, jti);
+					ps.executeUpdate();
+					return newcode;
+				}
+				
+			} else if(grantType.equals(GrantType.refresh_token)) {
+				ps = conn.prepareStatement("SELECT authcode, secret, username FROM v_refreshtoken WHERE refreshtoken=? AND expiration > CURRENT_TIMESTAMP AND redeemed IS NULL");
+				ps.setString(1, jti);
+				rs = ps.executeQuery();
+				if(rs.next()) {
+					String authcode = rs.getString("authcode");
+					newcode.setSecret(rs.getString("secret"));
+					newcode.setUsername(rs.getString("username"));
+					rs.close();
+					ps.close();
+					ps = conn.prepareStatement("UPDATE refreshtoken SET redeemed = CURRENT_TIMESTAMP WHERE refreshtoken=?");
+					ps.setString(1, jti);
+					ps.executeUpdate();
+					ps.close();
+					ps = conn.prepareStatement("UPDATE accesstoken SET expiration = CURRENT_TIMESTAMP WHERE fk_authcode=? AND expiration > CURRENT_TIMESTAMP");
+					ps.setString(1, authcode);
+					ps.executeUpdate();
+					ps.close();
+					ps = conn.prepareStatement("INSERT INTO accesstoken (accesstoken, fk_authcode, expiration) VALUES (?,?,(CURRENT_TIMESTAMP + (300 * INTERVAL '1 minute')))");
+					ps.setString(1, newcode.getAccessToken());
+					ps.setString(2, authcode);
+					ps.executeUpdate();
+					ps.close();
+					ps = conn.prepareStatement("INSERT INTO refreshtoken (refreshtoken, fk_authcode, expiration) VALUES (?,?,(CURRENT_TIMESTAMP + (20160 * INTERVAL '1 minute')))");
+					ps.setString(1, newcode.getRefreshToken());
+					ps.setString(2, authcode);
+					ps.executeUpdate();
+					return newcode;
+				}
+				
+			} else {
+				return null;
+			}
 		} catch (SQLException e) {
 			System.out.println("SQL Exception: " + e.getMessage());
 		} finally {
@@ -82,8 +238,10 @@ public class OAuthCodeHelperImpl implements OAuthCodeHelper {
 	
 	private String codeGenerator() {
 		StringBuilder code = new StringBuilder();
+		code.append(UUID.randomUUID());
+		code.append("-");
 		Random random = new Random();
-		for(int i=0;i<64;i++) {
+		for(int i=0;i<27;i++) {
 			code.append(chars[random.nextInt(chars.length)]);
 		}
 		return code.toString();

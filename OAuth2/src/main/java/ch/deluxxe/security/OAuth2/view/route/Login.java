@@ -41,8 +41,9 @@ public class Login extends VerticalLayout implements HasUrlParameter<String> {
 		private String clientId = null;
 		private String redirectUri = null;
 		private String deviceId = null;
+		private String state = null;
 		
-		public LoginRequestImpl(String responseType, String clientId, String redirectUri, String deviceId) {
+		public LoginRequestImpl(String responseType, String clientId, String redirectUri, String deviceId, String state) {
 			this.responseType = responseType;
 			this.clientId = clientId;
 			this.redirectUri = redirectUri;
@@ -76,6 +77,15 @@ public class Login extends VerticalLayout implements HasUrlParameter<String> {
 			}
 			return false;
 		}
+
+		@Override
+		public String getState() {
+			if(state == null) {
+				return "none";
+			} else {
+				return state;
+			}
+		}
 		
 	}
 	
@@ -99,6 +109,7 @@ public class Login extends VerticalLayout implements HasUrlParameter<String> {
 			String clientId = null;
 			String redirectUrl = null;
 			String deviceId = null;
+			String state = null;
 			if(parametersMap.get("response_type") != null) {
 				responseType = parametersMap.get("response_type").get(0);
 			}
@@ -111,7 +122,10 @@ public class Login extends VerticalLayout implements HasUrlParameter<String> {
 			if(parametersMap.get("device_id") != null) {
 				deviceId = parametersMap.get("device_id").get(0);
 			}
-			loginRequest = new LoginRequestImpl(responseType,clientId,redirectUrl,deviceId);
+			if(parametersMap.get("state") != null) {
+				deviceId = parametersMap.get("state").get(0);
+			}
+			loginRequest = new LoginRequestImpl(responseType,clientId,redirectUrl,deviceId,state);
 			loginListener.setLoginRequest(loginRequest);
 			
 		}

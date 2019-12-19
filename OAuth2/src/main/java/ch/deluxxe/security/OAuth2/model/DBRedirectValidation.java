@@ -40,6 +40,10 @@ private DataSource ds;
 			rs = ps.executeQuery();
 			if(rs.next()) {
 				String[] redirects = rs.getString("redirecturi").split(",");
+				//System.out.println(redirectUri);
+				//for(String a:redirects) {
+				//	System.out.println(a);
+				//}
 				if(Arrays.asList(redirects).contains(redirectUri)) {
 					return true;
 				}

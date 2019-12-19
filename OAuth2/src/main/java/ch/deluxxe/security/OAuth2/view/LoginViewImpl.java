@@ -10,6 +10,9 @@ import com.vaadin.flow.component.html.Label;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.PasswordField;
 import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.server.VaadinService;
+import com.vaadin.flow.server.VaadinServletResponse;
+
 import ch.deluxxe.security.OAuth2.view.ifaces.LoginView;
 
 
@@ -69,6 +72,15 @@ public class LoginViewImpl extends VerticalLayout implements LoginView {
 	@Override
 	public void removeLoginListener(LoginListener listener) {
 		listeners.remove(listener);
+	}
+
+	@Override
+	public void redirect(String uri) {
+		// this doesn't work...
+		((VaadinServletResponse) VaadinService.getCurrentResponse()).getHttpServletResponse().setHeader("Cache-Control","no-store");
+		((VaadinServletResponse) VaadinService.getCurrentResponse()).getHttpServletResponse().setHeader("Pragma","no-cache");
+		// this works
+		getUI().get().getPage().setLocation(uri);
 	}
 
 	

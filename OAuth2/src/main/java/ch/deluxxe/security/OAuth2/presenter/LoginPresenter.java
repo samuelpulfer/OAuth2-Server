@@ -36,7 +36,16 @@ public class LoginPresenter implements LoginListener {
 			if(authorization.authorize(username.toLowerCase(), request.getClientId(), "User")) {
 				if(redirectValidation.validate(request.getClientId(),request.getRedirectUri())) {
 					view.setMessage("Authenticated, authorized and redirect validated");
-					System.out.println(codeHelper.getCode(username, request.getClientId(), "User"));
+					//System.out.println(codeHelper.getCode(username, request.getClientId(), "User"));
+					StringBuilder sb = new StringBuilder();
+					sb.append(request.getRedirectUri());
+					sb.append("?");
+					sb.append("code=");
+					sb.append(codeHelper.getAuthCode(username, request.getClientId(), "User"));
+					sb.append("&");
+					sb.append("state=");
+					sb.append(request.getState());
+					view.redirect(sb.toString());
 				} else {
 					view.setMessage("Ungültige RedirectUri");
 				}
