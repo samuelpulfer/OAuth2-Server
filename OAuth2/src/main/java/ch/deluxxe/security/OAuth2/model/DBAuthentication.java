@@ -90,6 +90,16 @@ public class DBAuthentication implements Authentication {
 	    }
 	    return new String(hexChars).toLowerCase();
 	}
+
+	@Override
+	public void close() {
+		// TODO Auto-generated method stub
+	}
+
+	@Override
+	public String getSuffix() {
+		return "";
+	}
 	
 	
 

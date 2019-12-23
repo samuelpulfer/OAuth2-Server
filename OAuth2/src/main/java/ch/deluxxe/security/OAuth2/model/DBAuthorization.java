@@ -63,4 +63,12 @@ public class DBAuthorization implements Authorization {
 		return false;
 	}
 
+
+
+	@Override
+	public void close() {
+		// TODO Auto-generated method stub
+		
+	}
+
 }

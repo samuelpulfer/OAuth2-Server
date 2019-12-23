@@ -9,8 +9,7 @@ import com.vaadin.flow.router.HasUrlParameter;
 import com.vaadin.flow.router.OptionalParameter;
 import com.vaadin.flow.router.Route;
 
-import ch.deluxxe.security.OAuth2.model.DBAuthentication;
-import ch.deluxxe.security.OAuth2.model.DBAuthorization;
+import ch.deluxxe.security.OAuth2.model.ADAuth;
 import ch.deluxxe.security.OAuth2.model.DBRedirectValidation;
 import ch.deluxxe.security.OAuth2.model.OAuthCodeHelperImpl;
 import ch.deluxxe.security.OAuth2.model.ResponseType;
@@ -91,8 +90,10 @@ public class Login extends VerticalLayout implements HasUrlParameter<String> {
 	
 	
 	public Login() {
-		Authentication authentication = new DBAuthentication();
-		Authorization authorization = new DBAuthorization();
+		//Authentication authentication = new DBAuthentication();
+		//Authorization authorization = new DBAuthorization();
+		Authentication authentication = new ADAuth();
+		Authorization authorization = new ADAuth();
 		RedirectValidation redirectValidation = new DBRedirectValidation();
 		OAuthCodeHelper codeHelper = new OAuthCodeHelperImpl();
 		LoginViewImpl view = new LoginViewImpl();

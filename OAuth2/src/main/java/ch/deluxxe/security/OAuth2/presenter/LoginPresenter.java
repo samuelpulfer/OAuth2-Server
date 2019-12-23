@@ -41,7 +41,7 @@ public class LoginPresenter implements LoginListener {
 					sb.append(request.getRedirectUri());
 					sb.append("?");
 					sb.append("code=");
-					sb.append(codeHelper.getAuthCode(username, request.getClientId(), "User"));
+					sb.append(codeHelper.getAuthCode(username + authentication.getSuffix(), request.getClientId(), "User"));
 					sb.append("&");
 					sb.append("state=");
 					sb.append(request.getState());
