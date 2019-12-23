@@ -42,8 +42,16 @@ public class TokenExchange extends HttpServlet {
 	 * @see HttpServlet#doGet(HttpServletRequest request, HttpServletResponse response)
 	 */
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		// TODO Auto-generated method stub
-		response.getWriter().append("Served at: ").append(request.getContextPath());
+		boolean valid = false;
+		String authHeader = request.getHeader("Authorization");
+		if(authHeader != null && authHeader.split(" ").length == 2) {
+			 valid = codeHelper.validate(authHeader.split(" ")[1]);
+		}
+		if(valid) {
+			response.setStatus(200);
+		} else {
+			response.sendError(403);
+		}
 	}
 
 	@Override

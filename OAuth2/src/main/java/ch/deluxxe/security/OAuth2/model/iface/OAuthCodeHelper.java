@@ -12,5 +12,6 @@ public interface OAuthCodeHelper {
 	
 	public String getAuthCode(String username, String application, String role);
 	public OAuthCodePair getToken(String code, GrantType grantType);
+	public boolean validate(String code);
 
 }

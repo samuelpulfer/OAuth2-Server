@@ -247,4 +247,44 @@ public class OAuthCodeHelperImpl implements OAuthCodeHelper {
 		return code.toString();
 	}
 
+	@Override
+	public boolean validate(String code) {
+		String jti = null;
+		try {
+			JSONObject jo = new JSONObject(new String(Base64.getUrlDecoder().decode(code.split("\\.")[1])));
+			//System.out.println(jo);
+			jti = jo.getString("jti");
+		} catch(Exception e) {
+			return false;
+		}
+		Connection conn = null;
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+		try {
+			conn = ds.getConnection();
+			ps = conn.prepareStatement("SELECT id FROM v_accesstoken WHERE accesstoken=? AND expiration > CURRENT_TIMESTAMP");
+			ps.setString(1, jti);
+			rs = ps.executeQuery();
+			if(rs.next()) {
+				return true;
+			}
+		} catch (SQLException e) {
+			System.out.println("SQL Exception: " + e.getMessage());
+		} finally {
+			try {
+				rs.close();
+			} catch (Exception e) {
+			}
+			try {
+				ps.close();
+			} catch (Exception e) {
+			}
+			try {
+				conn.close();
+			} catch (Exception e) {
+			}
+		}
+		return false;
+	}
+
 }

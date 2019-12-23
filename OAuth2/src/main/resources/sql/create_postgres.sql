@@ -94,7 +94,7 @@ CREATE VIEW v_refreshtoken AS (
 	LEFT JOIN v_authcode ON(refreshtoken.fk_authcode = v_authcode.authcode)
 );
 CREATE VIEW v_accesstoken AS (
-	SELECT v_authcode.appname, v_authcode.secret, v_authcode.rolename, v_authcode.username, v_authcode.authcode, accesstoken.accesstoken, accesstoken.expiration
+	SELECT accesstoken.id, v_authcode.appname, v_authcode.secret, v_authcode.rolename, v_authcode.username, v_authcode.authcode, accesstoken.accesstoken, accesstoken.expiration
 	FROM accesstoken
 	LEFT JOIN v_authcode ON(accesstoken.fk_authcode = v_authcode.authcode)
 );
