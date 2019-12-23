@@ -73,7 +73,7 @@ public class TokenExchange extends HttpServlet {
 		
 		if(pair == null) {
 			System.out.println("Pair is null...");
-			response.sendError(500);
+			response.sendError(511);
 		} else {
 			JSONObject jo = new JSONObject();
 			jo.put("state", "none");

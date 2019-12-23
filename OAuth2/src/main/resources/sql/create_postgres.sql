@@ -86,6 +86,7 @@ CREATE VIEW v_authcode AS (
 	LEFT JOIN roles ON(nn_users_roles.fk_roles = roles.id)
 	LEFT JOIN users ON(nn_users_roles.fk_users = users.id)
 	LEFT JOIN application ON(roles.fk_application = application.id)
+	WHERE roles.deleted IS NULL
 );
 CREATE VIEW v_refreshtoken AS (
 	SELECT v_authcode.appname, v_authcode.secret, v_authcode.rolename, v_authcode.username, v_authcode.authcode, refreshtoken.refreshtoken, refreshtoken.expiration, refreshtoken.redeemed
