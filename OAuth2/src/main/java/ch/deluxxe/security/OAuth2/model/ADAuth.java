@@ -32,12 +32,12 @@ public class ADAuth implements Authentication,Authorization {
 	private JSONObject settings = null;
 
 	public ADAuth() {
-		System.setProperty("javax.net.ssl.trustStore", "C:\\tmp\\myTrustStore");
-		System.setProperty("javax.net.ssl.trustStorePassword", "changeit");
+		//System.setProperty("javax.net.ssl.trustStore", "C:\\tmp\\myTrustStore");
+		//System.setProperty("javax.net.ssl.trustStorePassword", "changeit");
 		
 		try {
 			Context ctx = new InitialContext();
-			ds = (DataSource) ctx.lookup("java:comp/env/jdbc/postgres");
+			ds = (DataSource) ctx.lookup("java:comp/env/jdbc/main");
 		} catch (NamingException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

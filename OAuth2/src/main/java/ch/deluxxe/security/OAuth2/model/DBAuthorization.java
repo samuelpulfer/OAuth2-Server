@@ -18,7 +18,7 @@ public class DBAuthorization implements Authorization {
 	public DBAuthorization() {
 		try {
 			Context ctx = new InitialContext();
-			ds = (DataSource) ctx.lookup("java:comp/env/jdbc/postgres");
+			ds = (DataSource) ctx.lookup("java:comp/env/jdbc/main");
 		} catch (NamingException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

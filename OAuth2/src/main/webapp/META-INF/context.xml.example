@@ -1,7 +1,8 @@
 <!-- Copy this file to META_INF/context.xml and adjust the DB settings to your DB -->
 
 <Context>
-	<Resource name="jdbc/postgres"
+
+	<Resource name="jdbc/main"
 		auth="Container"
 		type="javax.sql.DataSource"
 		driverClassName="org.postgresql.Driver"
@@ -12,4 +13,17 @@
 		maxIdle="10"
 		maxWait="-1">
 	</Resource>
+<!--
+	<Resource name="jdbc/main"
+		auth="Container" 
+		type="javax.sql.DataSource"
+    	username="user"
+    	password="password"
+    	databaseName="oauth"
+    	driverClassName="com.microsoft.sqlserver.jdbc.SQLServerDriver"
+    	url="jdbc:sqlserver://mssql.deluxxe.ch\instanceone"
+    	maxTotal="25"
+    	maxIdle="10">
+    </Resource>
+-->
 </Context>

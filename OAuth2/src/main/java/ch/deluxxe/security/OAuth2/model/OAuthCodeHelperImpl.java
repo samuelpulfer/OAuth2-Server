@@ -6,6 +6,8 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.Base64;
 import java.util.Random;
 import java.util.UUID;
@@ -82,7 +84,7 @@ public class OAuthCodeHelperImpl implements OAuthCodeHelper {
 	public OAuthCodeHelperImpl() {
 		try {
 			Context ctx = new InitialContext();
-			ds = (DataSource) ctx.lookup("java:comp/env/jdbc/postgres");
+			ds = (DataSource) ctx.lookup("java:comp/env/jdbc/main");
 		} catch (NamingException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -102,7 +104,7 @@ public class OAuthCodeHelperImpl implements OAuthCodeHelper {
 		try {
 			conn = ds.getConnection();
 
-			ps = conn.prepareStatement("SELECT userstorolesid, secret FROM v_roles WHERE username=? AND appname=? AND rolename=?");
+			ps = conn.prepareStatement("SELECT userstorolesid, secret, (SELECT CURRENT_TIMESTAMP) AS tsnow FROM v_roles WHERE username=? AND appname=? AND rolename=?");
 			ps.setString(1, username);
 			ps.setString(2, application);
 			ps.setString(3, role);
@@ -110,14 +112,16 @@ public class OAuthCodeHelperImpl implements OAuthCodeHelper {
 			if(rs.next()) {
 				int roleId = rs.getInt("userstorolesid");
 				String secret = rs.getString("secret");
+				LocalDateTime later = rs.getTimestamp("tsnow").toLocalDateTime().plusMinutes(5);
 				ps.close();
 				ps = conn.prepareStatement("UPDATE authcode SET expiration = CURRENT_TIMESTAMP WHERE fk_nn_users_roles=? AND redeemed IS NULL AND expiration > CURRENT_TIMESTAMP");
 				ps.setInt(1, roleId);
 				ps.executeUpdate();
 				ps.close();
-				ps = conn.prepareStatement("INSERT INTO authcode (authcode,expiration,fk_nn_users_roles) VALUES (?,(CURRENT_TIMESTAMP + (5 * INTERVAL '1 minute')),?)");
+				ps = conn.prepareStatement("INSERT INTO authcode (authcode,expiration,fk_nn_users_roles) VALUES (?,?,?)");
 				ps.setString(1, code);
-				ps.setInt(2, roleId);
+				ps.setTimestamp(2, Timestamp.valueOf(later));
+				ps.setInt(3, roleId);
 				ps.execute();
 				return jwt.getTokenHMAC(jo, secret);
 			}
@@ -160,10 +164,11 @@ public class OAuthCodeHelperImpl implements OAuthCodeHelper {
 			conn = ds.getConnection();
 			
 			if(grantType.equals(GrantType.authorization_code)) {
-				ps = conn.prepareStatement("SELECT authcode, secret, username FROM v_authcode WHERE authcode=? AND expiration > CURRENT_TIMESTAMP AND redeemed IS NULL");
+				ps = conn.prepareStatement("SELECT authcode, secret, username, (SELECT CURRENT_TIMESTAMP) AS tsnow FROM v_authcode WHERE authcode=? AND expiration > CURRENT_TIMESTAMP AND redeemed IS NULL");
 				ps.setString(1, jti);
 				rs = ps.executeQuery();
 				if(rs.next()) {
+					LocalDateTime now = rs.getTimestamp("tsnow").toLocalDateTime();
 					newcode.setSecret(rs.getString("secret"));
 					newcode.setUsername(rs.getString("username"));
 					rs.close();
@@ -172,23 +177,26 @@ public class OAuthCodeHelperImpl implements OAuthCodeHelper {
 					ps.setString(1, jti);
 					ps.executeUpdate();
 					ps.close();
-					ps = conn.prepareStatement("INSERT INTO accesstoken (accesstoken, fk_authcode, expiration) VALUES (?,?,(CURRENT_TIMESTAMP + (300 * INTERVAL '1 minute')))");
+					ps = conn.prepareStatement("INSERT INTO accesstoken (accesstoken, fk_authcode, expiration) VALUES (?,?,?)");
 					ps.setString(1, newcode.getAccessToken());
 					ps.setString(2, jti);
+					ps.setTimestamp(3, Timestamp.valueOf(now.plusMinutes(300)));
 					ps.executeUpdate();
 					ps.close();
-					ps = conn.prepareStatement("INSERT INTO refreshtoken (refreshtoken, fk_authcode, expiration) VALUES (?,?,(CURRENT_TIMESTAMP + (20160 * INTERVAL '1 minute')))");
+					ps = conn.prepareStatement("INSERT INTO refreshtoken (refreshtoken, fk_authcode, expiration) VALUES (?,?,?)");
 					ps.setString(1, newcode.getRefreshToken());
 					ps.setString(2, jti);
+					ps.setTimestamp(3, Timestamp.valueOf(now.plusMinutes(20160)));
 					ps.executeUpdate();
 					return newcode;
 				}
 				
 			} else if(grantType.equals(GrantType.refresh_token)) {
-				ps = conn.prepareStatement("SELECT authcode, secret, username FROM v_refreshtoken WHERE refreshtoken=? AND expiration > CURRENT_TIMESTAMP AND redeemed IS NULL");
+				ps = conn.prepareStatement("SELECT authcode, secret, username, (SELECT CURRENT_TIMESTAMP) AS tsnow FROM v_refreshtoken WHERE refreshtoken=? AND expiration > CURRENT_TIMESTAMP AND redeemed IS NULL");
 				ps.setString(1, jti);
 				rs = ps.executeQuery();
 				if(rs.next()) {
+					LocalDateTime now = rs.getTimestamp("tsnow").toLocalDateTime();
 					String authcode = rs.getString("authcode");
 					newcode.setSecret(rs.getString("secret"));
 					newcode.setUsername(rs.getString("username"));
@@ -202,14 +210,16 @@ public class OAuthCodeHelperImpl implements OAuthCodeHelper {
 					ps.setString(1, authcode);
 					ps.executeUpdate();
 					ps.close();
-					ps = conn.prepareStatement("INSERT INTO accesstoken (accesstoken, fk_authcode, expiration) VALUES (?,?,(CURRENT_TIMESTAMP + (300 * INTERVAL '1 minute')))");
+					ps = conn.prepareStatement("INSERT INTO accesstoken (accesstoken, fk_authcode, expiration) VALUES (?,?,?)");
 					ps.setString(1, newcode.getAccessToken());
 					ps.setString(2, authcode);
+					ps.setTimestamp(3, Timestamp.valueOf(now.plusMinutes(300)));
 					ps.executeUpdate();
 					ps.close();
-					ps = conn.prepareStatement("INSERT INTO refreshtoken (refreshtoken, fk_authcode, expiration) VALUES (?,?,(CURRENT_TIMESTAMP + (20160 * INTERVAL '1 minute')))");
+					ps = conn.prepareStatement("INSERT INTO refreshtoken (refreshtoken, fk_authcode, expiration) VALUES (?,?,?)");
 					ps.setString(1, newcode.getRefreshToken());
 					ps.setString(2, authcode);
+					ps.setTimestamp(3, Timestamp.valueOf(now.plusMinutes(20160)));
 					ps.executeUpdate();
 					return newcode;
 				}
