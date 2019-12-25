@@ -7,7 +7,9 @@ Installation:
 - Create Postgres tables with script src/main/resources/sql/create_postgres.sql
 - Configure DB connection in src/main/webapp/META-INF/context.xml.example and rename it to context.xml
 - Install Tomcat 9
-- Compile WAR and deploy it to Tomcat
+- Install latest version of nodejs
+- Compile WAR with mvn package -Pproduction
+- Deploy WAR to Tomcat
 
 Test it at:
 <br>
