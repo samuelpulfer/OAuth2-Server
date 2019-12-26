@@ -91,6 +91,7 @@ public class TokenExchange extends HttpServlet {
 			jo.put("expires_in", 20160);
 			jo.put("refresh_token", pair.getJWTRefreshToken());
 			response.setHeader("Content-Type", "application/json");
+			response.addHeader("Access-Control-Allow-Origin", "*");
 			response.getWriter().append(jo.toString());
 			return;
 		}
