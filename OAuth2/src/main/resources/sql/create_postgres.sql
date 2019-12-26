@@ -98,7 +98,7 @@ CREATE VIEW v_accesstoken AS (
 	FROM accesstoken
 	LEFT JOIN v_authcode ON(accesstoken.fk_authcode = v_authcode.authcode)
 );
-INSERT INTO application (appname,redirecturi,secret) VALUES ('testapp','http://localhost:8080/MyRedirectUri','superStrongSecret');
+INSERT INTO application (appname,redirecturi,secret) VALUES ('testapp','http://localhost:8100/menu/signin','superStrongSecret');
 INSERT INTO roles (rolename,adgroup,fk_application) VALUES ('User','CN=P_testapp_Users,OU=Permission,OU=Groups,OU=ad,DC=deluxxe,DC=ch',1);
 INSERT INTO users (username,password) VALUES ('user',MD5('password'));
 INSERT INTO nn_users_roles (fk_users,fk_roles) VALUES (1,1);
