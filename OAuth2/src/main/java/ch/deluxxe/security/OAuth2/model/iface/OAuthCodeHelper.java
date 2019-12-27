@@ -1,5 +1,7 @@
 package ch.deluxxe.security.OAuth2.model.iface;
 
+import org.json.JSONObject;
+
 import ch.deluxxe.security.OAuth2.model.GrantType;
 
 public interface OAuthCodeHelper {
@@ -13,5 +15,6 @@ public interface OAuthCodeHelper {
 	public String getAuthCode(String username, String application, String role);
 	public OAuthCodePair getToken(String code, GrantType grantType);
 	public boolean validate(String code);
+	public JSONObject getUserinfo(String code);
 
 }

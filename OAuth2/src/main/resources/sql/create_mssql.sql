@@ -1,3 +1,22 @@
+/* DROP Tables */
+
+/*
+DROP VIEW v_userinfo;
+DROP VIEW v_roles;
+DROP VIEW v_accesstoken;
+DROP VIEW v_refreshtoken;
+DROP VIEW v_authcode;
+DROP TABLE application;
+DROP TABLE authcode;
+DROP TABLE accesstoken;
+DROP TABLE refreshtoken;
+DROP TABLE nn_users_roles;
+DROP TABLE roles;
+DROP TABLE settings;
+DROP TABLE users;
+*/
+
+
 CREATE TABLE application
 (
     id INT NOT NULL IDENTITY(1,1) PRIMARY KEY,
@@ -79,6 +98,15 @@ CREATE VIEW v_accesstoken AS (
 	SELECT v_authcode.appname, v_authcode.secret, v_authcode.rolename, v_authcode.username, v_authcode.authcode, accesstoken.accesstoken, accesstoken.expiration
 	FROM accesstoken
 	LEFT JOIN v_authcode ON(accesstoken.fk_authcode = v_authcode.authcode)
+);
+CREATE VIEW v_userinfo AS (
+	SELECT accesstoken.accesstoken, roles.rolename, users.username, users.firstname, users.surname, users.email
+	FROM accesstoken
+	LEFT JOIN authcode ON(accesstoken.fk_authcode = authcode.authcode)
+	LEFT JOIN nn_users_roles ON(authcode.fk_nn_users_roles = nn_users_roles.id)
+	LEFT JOIN roles ON(nn_users_roles.fk_roles = roles.id)
+	LEFT JOIN users ON(nn_users_roles.fk_users = users.id)
+	WHERE nn_users_roles.deleted IS NULL AND accesstoken.expiration > CURRENT_TIMESTAMP
 );
 INSERT INTO application (appname,redirecturi,secret) VALUES ('testapp','http://localhost:8080/menu/signin','superStrongSecret');
 INSERT INTO roles (rolename,adgroup,fk_application) VALUES ('User','CN=P_testapp_Users,OU=Permission,OU=Groups,OU=ad,DC=deluxxe,DC=ch',1);

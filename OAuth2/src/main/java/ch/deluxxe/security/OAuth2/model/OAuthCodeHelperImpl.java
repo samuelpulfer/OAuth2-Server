@@ -150,11 +150,16 @@ public class OAuthCodeHelperImpl implements OAuthCodeHelper {
 	@Override
 	public OAuthCodePair getToken(String code, GrantType grantType) {
 		OAuthCodePairImpl newcode = new OAuthCodePairImpl();
-		
+		String jti = null;
+		try {
 		JSONObject jo = new JSONObject(new String(Base64.getUrlDecoder().decode(code.split("\\.")[1])));
 		System.out.println(jo);
-		String jti = jo.getString("jti");
+		jti = jo.getString("jti");
 		System.out.println(jti);
+		} catch(Exception e) {
+			System.out.println("Token not decodable or empty");
+			return null;
+		}
 		
 		Connection conn = null;
 		PreparedStatement ps = null;
@@ -259,24 +264,50 @@ public class OAuthCodeHelperImpl implements OAuthCodeHelper {
 
 	@Override
 	public boolean validate(String code) {
+		JSONObject userinfo = getUserinfo(code);
+		if(userinfo == null) {
+			return false;
+		}
+		return true;
+	}
+
+	@Override
+	public JSONObject getUserinfo(String code) {
+		JSONObject userinfo = null;
 		String jti = null;
 		try {
 			JSONObject jo = new JSONObject(new String(Base64.getUrlDecoder().decode(code.split("\\.")[1])));
 			//System.out.println(jo);
 			jti = jo.getString("jti");
 		} catch(Exception e) {
-			return false;
+			return userinfo;
 		}
 		Connection conn = null;
 		PreparedStatement ps = null;
 		ResultSet rs = null;
 		try {
 			conn = ds.getConnection();
-			ps = conn.prepareStatement("SELECT id FROM v_accesstoken WHERE accesstoken=? AND expiration > CURRENT_TIMESTAMP");
+			ps = conn.prepareStatement("SELECT * FROM v_userinfo WHERE accesstoken=?");
 			ps.setString(1, jti);
 			rs = ps.executeQuery();
 			if(rs.next()) {
-				return true;
+				userinfo = new JSONObject();
+				if(rs.getString("firstname") != null && rs.getString("surname") != null) {
+					userinfo.put("given_name", rs.getString("firstname"));
+					userinfo.put("family_name", rs.getString("surname"));
+					userinfo.put("name", rs.getString("firstname") + " " + rs.getString("surname"));
+				} else if(rs.getString("surname") != null) {
+					userinfo.put("family_name", rs.getString("surname"));
+					userinfo.put("name", rs.getString("surname"));
+				} else if(rs.getString("firstname") != null) {
+					userinfo.put("given_name", rs.getString("firstname"));
+					userinfo.put("name", rs.getString("firstname"));
+				}
+				if(rs.getString("email") != null) {
+					userinfo.put("email", rs.getString("email"));
+				}
+				userinfo.put("sub", rs.getString("username"));
+				userinfo.put("preferred_username", rs.getString("username").split("@")[0]);
 			}
 		} catch (SQLException e) {
 			System.out.println("SQL Exception: " + e.getMessage());
@@ -294,7 +325,7 @@ public class OAuthCodeHelperImpl implements OAuthCodeHelper {
 			} catch (Exception e) {
 			}
 		}
-		return false;
+		return userinfo;
 	}
 
 }
