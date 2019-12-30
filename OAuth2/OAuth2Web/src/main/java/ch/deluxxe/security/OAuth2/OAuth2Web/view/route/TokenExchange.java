@@ -1,7 +1,6 @@
 package ch.deluxxe.security.OAuth2.OAuth2Web.view.route;
 
 import java.io.IOException;
-import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
@@ -14,6 +13,8 @@ import ch.deluxxe.security.OAuth2.OAuthHelper.model.GrantType;
 import ch.deluxxe.security.OAuth2.OAuthHelper.model.OAuthCodeHelperImpl;
 import ch.deluxxe.security.OAuth2.OAuthHelper.model.iface.OAuthCodeHelper;
 import ch.deluxxe.security.OAuth2.OAuthHelper.model.iface.OAuthCodeHelper.OAuthCodePair;
+import ch.deluxxe.security.OAuth2.OAuthHelper.view.OAuthServlet;
+import ch.deluxxe.security.OAuth2.OAuthHelper.view.iface.OAuthInfo;
 
 
 
@@ -21,7 +22,7 @@ import ch.deluxxe.security.OAuth2.OAuthHelper.model.iface.OAuthCodeHelper.OAuthC
  * Servlet implementation class TokenExchange
  */
 @WebServlet("/token")
-public class TokenExchange extends HttpServlet {
+public class TokenExchange extends OAuthServlet {
 	private static final long serialVersionUID = 1L;
 	OAuthCodeHelper codeHelper = null;
        
@@ -30,45 +31,21 @@ public class TokenExchange extends HttpServlet {
      */
     public TokenExchange() {
         super();
-        
+        codeHelper = new OAuthCodeHelperImpl();
     }
 
-	/**
-	 * @see Servlet#init(ServletConfig)
-	 */
-	public void init(ServletConfig config) throws ServletException {
-		codeHelper = new OAuthCodeHelperImpl();
-	}
-
-	/**
-	 * @see HttpServlet#doGet(HttpServletRequest request, HttpServletResponse response)
-	 */
-	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		response.addHeader("Access-Control-Allow-Origin", "*");
-		boolean valid = false;
-		String authHeader = request.getHeader("Authorization");
-		if(authHeader != null && authHeader.split(" ").length == 2) {
-			 valid = codeHelper.validate(authHeader.split(" ")[1]);
-		}
-		if(valid) {
-			response.setStatus(200);
-		} else {
-			response.sendError(401, "The Access Token expired");
-		}
-	}
 
 	@Override
-	protected void doOptions(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-		resp.addHeader("Access-Control-Allow-Origin", "*");
-		resp.addHeader("Access-Control-Allow-Methods", "GET, OPTIONS, HEAD, POST");
-		resp.addHeader("Access-Control-Allow-Headers", "Accept, Authorization");
-		resp.setStatus(HttpServletResponse.SC_ACCEPTED);
-		return;
+	protected void doGet(HttpServletRequest request, HttpServletResponse response, OAuthInfo info) throws ServletException, IOException {
+		
+		response.sendError(HttpServletResponse.SC_NO_CONTENT);
 	}
+
 
 	/**
 	 * @see HttpServlet#doPost(HttpServletRequest request, HttpServletResponse response)
 	 */
+	@Override
 	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		System.out.println("POST");
 		response.addHeader("Access-Control-Allow-Origin", "*");

@@ -106,7 +106,7 @@ CREATE VIEW v_userinfo AS (
 	LEFT JOIN nn_users_roles ON(authcode.fk_nn_users_roles = nn_users_roles.id)
 	LEFT JOIN roles ON(nn_users_roles.fk_roles = roles.id)
 	LEFT JOIN users ON(nn_users_roles.fk_users = users.id)
-	WHERE nn_users_roles.deleted IS NULL AND accesstoken.expiration > CURRENT_TIMESTAMP
+	WHERE nn_users_roles.deleted IS NULL
 );
 INSERT INTO application (appname,redirecturi,secret) VALUES ('testapp','http://localhost:8100/menu/signin','superStrongSecret');
 INSERT INTO roles (rolename,adgroup,fk_application) VALUES ('User','CN=P_testapp_Users,OU=Permission,OU=Groups,OU=ad,DC=deluxxe,DC=ch',1);

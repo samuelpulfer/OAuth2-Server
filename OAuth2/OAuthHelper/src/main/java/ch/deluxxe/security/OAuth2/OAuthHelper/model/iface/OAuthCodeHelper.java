@@ -3,6 +3,7 @@ package ch.deluxxe.security.OAuth2.OAuthHelper.model.iface;
 import org.json.JSONObject;
 
 import ch.deluxxe.security.OAuth2.OAuthHelper.model.GrantType;
+import ch.deluxxe.security.OAuth2.OAuthHelper.view.iface.OAuthInfo;
 
 
 
@@ -18,5 +19,6 @@ public interface OAuthCodeHelper {
 	public OAuthCodePair getToken(String code, GrantType grantType);
 	public boolean validate(String code);
 	public JSONObject getUserinfo(String code);
+	public OAuthInfo getOAuthInfo(String code);
 
 }

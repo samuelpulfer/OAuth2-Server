@@ -2,7 +2,7 @@
 
 <Context>
 
-	<Resource name="jdbc/main"
+	<Resource name="jdbc/oauthdb"
 		auth="Container"
 		type="javax.sql.DataSource"
 		driverClassName="org.postgresql.Driver"
@@ -14,7 +14,7 @@
 		maxWait="-1">
 	</Resource>
 <!--
-	<Resource name="jdbc/main"
+	<Resource name="jdbc/oauthdb"
 		auth="Container" 
 		type="javax.sql.DataSource"
     	username="user"

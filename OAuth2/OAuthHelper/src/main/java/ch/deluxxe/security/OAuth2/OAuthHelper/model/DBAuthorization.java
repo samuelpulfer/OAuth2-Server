@@ -19,7 +19,7 @@ public class DBAuthorization implements Authorization {
 	public DBAuthorization() {
 		try {
 			Context ctx = new InitialContext();
-			ds = (DataSource) ctx.lookup("java:comp/env/jdbc/main");
+			ds = (DataSource) ctx.lookup("java:comp/env/jdbc/oauthdb");
 		} catch (NamingException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

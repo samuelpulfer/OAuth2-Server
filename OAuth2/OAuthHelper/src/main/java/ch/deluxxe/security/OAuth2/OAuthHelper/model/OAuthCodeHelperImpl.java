@@ -20,6 +20,7 @@ import javax.sql.DataSource;
 import org.json.JSONObject;
 
 import ch.deluxxe.security.OAuth2.OAuthHelper.model.iface.OAuthCodeHelper;
+import ch.deluxxe.security.OAuth2.OAuthHelper.view.iface.OAuthInfo;
 
 
 public class OAuthCodeHelperImpl implements OAuthCodeHelper {
@@ -79,13 +80,49 @@ public class OAuthCodeHelperImpl implements OAuthCodeHelper {
 		
 	}
 	
+	private class OAuthInfoImpl implements OAuthInfo {
+
+		private String application = null;
+		private String role = null;
+		private String username = null;
+		private String accessCode = null;
+		
+		public OAuthInfoImpl(String application, String role, String username, String accessCode) {
+			this.application = application;
+			this.role = role;
+			this.username = username;
+			this.accessCode = accessCode;
+		}
+		
+		@Override
+		public String getApplication() {
+			return application;
+		}
+
+		@Override
+		public String getRole() {
+			return role;
+		}
+
+		@Override
+		public String getAccessCode() {
+			return accessCode;
+		}
+
+		@Override
+		public String getUsername() {
+			return username;
+		}
+		
+	}
+	
 	private DataSource ds;
 	private JWTHelper jwt = null;
 	
 	public OAuthCodeHelperImpl() {
 		try {
 			Context ctx = new InitialContext();
-			ds = (DataSource) ctx.lookup("java:comp/env/jdbc/main");
+			ds = (DataSource) ctx.lookup("java:comp/env/jdbc/oauthdb");
 		} catch (NamingException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -275,21 +312,17 @@ public class OAuthCodeHelperImpl implements OAuthCodeHelper {
 	@Override
 	public JSONObject getUserinfo(String code) {
 		JSONObject userinfo = null;
-		String jti = null;
-		try {
-			JSONObject jo = new JSONObject(new String(Base64.getUrlDecoder().decode(code.split("\\.")[1])));
-			//System.out.println(jo);
-			jti = jo.getString("jti");
-		} catch(Exception e) {
+		if(code == null) {
 			return userinfo;
 		}
+		
 		Connection conn = null;
 		PreparedStatement ps = null;
 		ResultSet rs = null;
 		try {
 			conn = ds.getConnection();
 			ps = conn.prepareStatement("SELECT * FROM v_userinfo WHERE accesstoken=?");
-			ps.setString(1, jti);
+			ps.setString(1, code);
 			rs = ps.executeQuery();
 			if(rs.next()) {
 				userinfo = new JSONObject();
@@ -327,6 +360,47 @@ public class OAuthCodeHelperImpl implements OAuthCodeHelper {
 			}
 		}
 		return userinfo;
+	}
+
+	@Override
+	public OAuthInfo getOAuthInfo(String code) {
+		OAuthInfo info = null;
+		String jti = null;
+		try {
+			JSONObject jo = new JSONObject(new String(Base64.getUrlDecoder().decode(code.split("\\.")[1])));
+			jti = jo.getString("jti");
+		} catch(Exception e) {
+			return info;
+		}
+		
+		Connection conn = null;
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+		try {
+			conn = ds.getConnection();
+			ps = conn.prepareStatement("SELECT appname,rolename,username FROM v_accesstoken WHERE accesstoken=? AND expiration > CURRENT_TIMESTAMP");
+			ps.setString(1, jti);
+			rs = ps.executeQuery();
+			if(rs.next()) {
+				info = new OAuthInfoImpl(rs.getString("appname"), rs.getString("rolename"), rs.getString("username"), jti);
+			}
+		} catch (SQLException e) {
+			System.out.println("SQL Exception: " + e.getMessage());
+		} finally {
+			try {
+				rs.close();
+			} catch (Exception e) {
+			}
+			try {
+				ps.close();
+			} catch (Exception e) {
+			}
+			try {
+				conn.close();
+			} catch (Exception e) {
+			}
+		}
+		return info;
 	}
 
 }
