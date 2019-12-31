@@ -80,6 +80,7 @@ public class ADAuth implements Authentication,Authorization {
 
 	@Override
 	public boolean authenticate(String username, String password) {
+		username = username.toLowerCase();
 		StartTlsResponse tls = null;
 		try {
 			LdapContext ctx = getContext();

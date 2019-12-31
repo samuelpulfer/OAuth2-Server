@@ -132,6 +132,7 @@ public class OAuthCodeHelperImpl implements OAuthCodeHelper {
 
 	@Override
 	public String getAuthCode(String username, String application, String role) {
+		username = username.toLowerCase();
 		String code = codeGenerator();
 		JSONObject jo = JWTHelper.payload(300, username, code);
 		

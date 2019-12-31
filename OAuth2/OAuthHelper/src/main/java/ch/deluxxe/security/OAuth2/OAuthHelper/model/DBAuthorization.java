@@ -30,6 +30,7 @@ public class DBAuthorization implements Authorization {
 
 	@Override
 	public boolean authorize(String username, String application, String role) {
+		username = username.toLowerCase();
 		Connection conn = null;
 		PreparedStatement ps = null;
 		ResultSet rs = null;

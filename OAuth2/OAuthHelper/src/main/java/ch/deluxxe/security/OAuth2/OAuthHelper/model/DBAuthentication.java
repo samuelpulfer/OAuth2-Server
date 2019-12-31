@@ -34,6 +34,7 @@ public class DBAuthentication implements Authentication {
 
 	@Override
 	public boolean authenticate(String username, String password) {
+		username = username.toLowerCase();
 		Connection conn = null;
 		PreparedStatement ps = null;
 		ResultSet rs = null;
