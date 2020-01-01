@@ -7,7 +7,7 @@
 	<parent>
 		<groupId>ch.deluxxe.security</groupId>
 		<artifactId>OAuth2</artifactId>
-		<version>0.0.1-SNAPSHOT</version>
+		<version>0.0.1</version>
 	</parent>
 	<groupId>ch.deluxxe.security.OAuth2</groupId>
 	<artifactId>OAuthHelper</artifactId>
