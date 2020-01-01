@@ -14,10 +14,18 @@ import javax.sql.DataSource;
 import ch.deluxxe.security.OAuth2.OAuthHelper.model.iface.RedirectValidation;
 
 
+/** Validates the redirect against a DB.
+ * Requires a Database connection defined as "java:comp/env/jdbc/oauthdb"
+ * @author Samuel Pulfer
+ *
+ */
 public class DBRedirectValidation implements RedirectValidation {
 	
 private DataSource ds;
 	
+	/**
+	 * Initials DataSource
+	 */
 	public DBRedirectValidation() {
 		try {
 			Context ctx = new InitialContext();

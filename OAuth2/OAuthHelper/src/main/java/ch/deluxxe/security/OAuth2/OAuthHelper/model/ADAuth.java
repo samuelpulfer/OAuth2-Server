@@ -27,16 +27,25 @@ import ch.deluxxe.security.OAuth2.OAuthHelper.model.iface.Authentication;
 import ch.deluxxe.security.OAuth2.OAuthHelper.model.iface.Authorization;
 
 
+/**
+ * @author Samuel Pulfer
+ * Implements an Authentication and Authorization against ActiceDirectory
+ * Requires a Database connection defined as "java:comp/env/jdbc/oauthdb" and a Java Truststore containing all needed certificates if tls is enabled (-Djavax.net.ssl.trustStore="C:\tmp\myTrustStore" -Djavax.net.ssl.trustStorePassword=changeit)
+ * 
+ */
+public class ADAuth implements Authentication, Authorization {
 
-public class ADAuth implements Authentication,Authorization {
-	
 	private DataSource ds = null;
 	private JSONObject settings = null;
 
+
+	/**
+	 * Initials DataSource and loads settings from DB
+	 */
 	public ADAuth() {
-		//System.setProperty("javax.net.ssl.trustStore", "C:\\tmp\\myTrustStore");
-		//System.setProperty("javax.net.ssl.trustStorePassword", "changeit");
-		
+		// System.setProperty("javax.net.ssl.trustStore", "C:\\tmp\\myTrustStore");
+		// System.setProperty("javax.net.ssl.trustStorePassword", "changeit");
+
 		try {
 			Context ctx = new InitialContext();
 			ds = (DataSource) ctx.lookup("java:comp/env/jdbc/oauthdb");
@@ -46,7 +55,10 @@ public class ADAuth implements Authentication,Authorization {
 		}
 		settings = getSettings();
 	}
-	
+
+	/**
+	 * @return a JSONObject containing the ActiveDirectory settings
+	 */
 	private JSONObject getSettings() {
 		Connection conn = null;
 		PreparedStatement ps = null;
@@ -55,10 +67,10 @@ public class ADAuth implements Authentication,Authorization {
 			conn = ds.getConnection();
 			ps = conn.prepareStatement("SELECT value FROM settings WHERE setting='ActiveDirectory'");
 			rs = ps.executeQuery();
-			if(rs.next()) {
+			if (rs.next()) {
 				return new JSONObject(rs.getString("value"));
 			}
-			
+
 		} catch (SQLException e) {
 			System.out.println("SQL Exception: " + e.getMessage());
 		} finally {
@@ -78,21 +90,22 @@ public class ADAuth implements Authentication,Authorization {
 		return null;
 	}
 
+
 	@Override
 	public boolean authenticate(String username, String password) {
 		username = username.toLowerCase();
 		StartTlsResponse tls = null;
 		try {
 			LdapContext ctx = getContext();
-			if(ctx != null) {
-				if(settings.getBoolean("tls")) {
+			if (ctx != null) {
+				if (settings.getBoolean("tls")) {
 					tls = (StartTlsResponse) ctx.extendedOperation(new StartTlsRequest());
 					tls.negotiate();
 				}
 				ctx.addToEnvironment(Context.SECURITY_PRINCIPAL, username + "@" + settings.getString("domain"));
 				ctx.addToEnvironment(Context.SECURITY_CREDENTIALS, password);
-				
-				String searchFilter = "(&(objectClass=user)(sAMAccountName=" + username +"))";
+
+				String searchFilter = "(&(objectClass=user)(sAMAccountName=" + username + "))";
 				SearchControls searchControls = new SearchControls();
 				searchControls.setSearchScope(SearchControls.SUBTREE_SCOPE);
 
@@ -105,13 +118,13 @@ public class ADAuth implements Authentication,Authorization {
 						String surname = null;
 						String email = null;
 						System.out.println(searchResult.getNameInNamespace());
-						if(searchResult.getAttributes().get("givenName") != null) {
+						if (searchResult.getAttributes().get("givenName") != null) {
 							firstname = searchResult.getAttributes().get("givenName").get().toString();
 						}
-						if(searchResult.getAttributes().get("sn") != null) {
+						if (searchResult.getAttributes().get("sn") != null) {
 							surname = searchResult.getAttributes().get("sn").get().toString();
 						}
-						if(searchResult.getAttributes().get("mail") != null) {
+						if (searchResult.getAttributes().get("mail") != null) {
 							email = searchResult.getAttributes().get("mail").get().toString();
 						}
 						System.out.println("givenName: " + searchResult.getAttributes().get("givenName").get().toString());
@@ -126,22 +139,22 @@ public class ADAuth implements Authentication,Authorization {
 							ps = conn.prepareStatement("SELECT id FROM users WHERE username=?");
 							ps.setString(1, username + "@" + settings.getString("domain"));
 							rs = ps.executeQuery();
-							if(rs.next()) {
+							if (rs.next()) {
 								int id = rs.getInt("id");
 								rs.close();
 								ps.close();
 								ps = conn.prepareStatement("UPDATE users SET firstname=?,surname=?,email=? WHERE id=?");
-								if(firstname == null) {
+								if (firstname == null) {
 									ps.setNull(1, Types.VARCHAR);
 								} else {
 									ps.setString(1, firstname);
 								}
-								if(surname == null) {
+								if (surname == null) {
 									ps.setNull(2, Types.VARCHAR);
 								} else {
 									ps.setString(2, surname);
 								}
-								if(email == null) {
+								if (email == null) {
 									ps.setNull(3, Types.VARCHAR);
 								} else {
 									ps.setString(3, email);
@@ -152,17 +165,17 @@ public class ADAuth implements Authentication,Authorization {
 								rs.close();
 								ps.close();
 								ps = conn.prepareStatement("INSERT INTO users (firstname,surname,email,username) VALUES (?,?,?,?)");
-								if(firstname == null) {
+								if (firstname == null) {
 									ps.setNull(1, Types.VARCHAR);
 								} else {
 									ps.setString(1, firstname);
 								}
-								if(surname == null) {
+								if (surname == null) {
 									ps.setNull(2, Types.VARCHAR);
 								} else {
 									ps.setString(2, surname);
 								}
-								if(email == null) {
+								if (email == null) {
 									ps.setNull(3, Types.VARCHAR);
 								} else {
 									ps.setString(3, email);
@@ -192,7 +205,7 @@ public class ADAuth implements Authentication,Authorization {
 					// Not authenticated
 					System.out.println("User is not authenticated");
 				}
-				if(settings.getBoolean("tls")) {
+				if (settings.getBoolean("tls")) {
 					tls.close();
 				}
 				ctx.close();
@@ -203,10 +216,16 @@ public class ADAuth implements Authentication,Authorization {
 		}
 		return false;
 	}
-	
+
+	/**
+	 * Creates a LdapContext containing the ActiveDirectory settings from DB
+	 * @return a LdapContext containing the ActiveDirectory settings from DB
+	 * @throws IOException
+	 * @throws NamingException
+	 */
 	private LdapContext getContext() throws IOException, NamingException {
 		Hashtable<String, String> props = new Hashtable<>();
-		if(settings == null) {
+		if (settings == null) {
 			return null;
 		} else {
 			props.put(Context.INITIAL_CONTEXT_FACTORY, "com.sun.jndi.ldap.LdapCtxFactory");
@@ -217,16 +236,18 @@ public class ADAuth implements Authentication,Authorization {
 		}
 	}
 
-	public static void main(String[] args) throws NamingException, IOException {
-
-	}
-
 	@Override
 	public void close() {
 		// TODO Auto-generated method stub
-		
+
 	}
-	
+
+	/**
+	 * Gets the ActiveDirectory group from DB
+	 * @param application the application to search the ActiveDirectory group for.
+	 * @param role the role to search the ActiveDirectory group for.
+	 * @return the ActiveDirectory group from DB
+	 */
 	private String getAdGroup(String application, String role) {
 		Connection conn = null;
 		PreparedStatement ps = null;
@@ -237,7 +258,7 @@ public class ADAuth implements Authentication,Authorization {
 			ps.setString(1, application);
 			ps.setString(2, role);
 			rs = ps.executeQuery();
-			if(rs.next()) {
+			if (rs.next()) {
 				return rs.getString("adgroup");
 			}
 		} catch (SQLException e) {
@@ -263,20 +284,20 @@ public class ADAuth implements Authentication,Authorization {
 	public boolean authorize(String username, String application, String role) {
 		StartTlsResponse tls = null;
 		String adGroup = getAdGroup(application, role);
-		if(adGroup == null) {
+		if (adGroup == null) {
 			return false;
 		}
-		
+
 		try {
 			LdapContext ctx = getContext();
-			if(ctx != null) {
-				if(settings.getBoolean("tls")) {
+			if (ctx != null) {
+				if (settings.getBoolean("tls")) {
 					tls = (StartTlsResponse) ctx.extendedOperation(new StartTlsRequest());
 					tls.negotiate();
 				}
 				ctx.addToEnvironment(Context.SECURITY_PRINCIPAL, settings.getString("user"));
 				ctx.addToEnvironment(Context.SECURITY_CREDENTIALS, settings.getString("password"));
-				
+
 				String searchFilter = "(&(objectClass=user)(sAMAccountName=" + username + ")(memberOf:1.2.840.113556.1.4.1941:=" + adGroup + "))";
 				SearchControls searchControls = new SearchControls();
 				searchControls.setSearchScope(SearchControls.SUBTREE_SCOPE);
@@ -289,13 +310,13 @@ public class ADAuth implements Authentication,Authorization {
 					int roleId = 0;
 					int userId = 0;
 					try {
-						
+
 						conn = ds.getConnection();
 						ps = conn.prepareStatement("SELECT id FROM v_roles WHERE appname=? AND rolename=?");
 						ps.setString(1, application);
 						ps.setString(2, role);
 						rs = ps.executeQuery();
-						if(rs.next()) {
+						if (rs.next()) {
 							roleId = rs.getInt("id");
 						}
 						rs.close();
@@ -303,10 +324,10 @@ public class ADAuth implements Authentication,Authorization {
 						ps = conn.prepareStatement("SELECT id FROM users WHERE username=?");
 						ps.setString(1, username + "@" + settings.getString("domain"));
 						rs = ps.executeQuery();
-						if(rs.next()) {
+						if (rs.next()) {
 							userId = rs.getInt("id");
 						}
-						if(roleId == 0 || userId == 0) {
+						if (roleId == 0 || userId == 0) {
 							return false;
 						}
 						if (results.hasMoreElements()) {
@@ -316,7 +337,7 @@ public class ADAuth implements Authentication,Authorization {
 							ps.setInt(1, userId);
 							ps.setInt(2, roleId);
 							rs = ps.executeQuery();
-							if(!rs.next()) {
+							if (!rs.next()) {
 								rs.close();
 								ps.close();
 								ps = conn.prepareStatement("INSERT INTO nn_users_roles (fk_users,fk_roles) VALUES (?,?)");
@@ -350,12 +371,12 @@ public class ADAuth implements Authentication,Authorization {
 						} catch (Exception e) {
 						}
 					}
-					
+
 				} catch (AuthenticationException e) {
 					// Not authenticated
 					System.out.println("User is not authenticated");
 				}
-				if(settings.getBoolean("tls")) {
+				if (settings.getBoolean("tls")) {
 					tls.close();
 				}
 				ctx.close();

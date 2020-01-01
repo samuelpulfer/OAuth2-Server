@@ -12,6 +12,11 @@ import ch.deluxxe.security.OAuth2.OAuthHelper.model.OAuthCodeHelperImpl;
 import ch.deluxxe.security.OAuth2.OAuthHelper.model.iface.OAuthCodeHelper;
 import ch.deluxxe.security.OAuth2.OAuthHelper.view.iface.OAuthInfo;
 
+/** An abstract class extending the HttpServlet with usefull OAuth helpers.
+ * If you like to handle a request method with first checking the Authorization overwrite for example the doGet(HttpServletRequest req, HttpServletResponse resp, OAuthInfo info). If you don't care about authorization override the doGet(HttpServletRequest req, HttpServletResponse resp) method.
+ * @author Samuel Pulfer
+ *
+ */
 public abstract class OAuthServlet extends HttpServlet {
 
 	/**
@@ -38,12 +43,20 @@ public abstract class OAuthServlet extends HttpServlet {
 	
 	private OAuthCodeHelper codeHelper = null;
 
+	/**
+	 * Constructs the Object with information about the overwritten methods.
+	 * If the constructor is overwritten and doesn't call super() this class will not work properly!!!
+	 */
 	public OAuthServlet() {
 		super();
 		getAllDeclaredMethods(this.getClass());
 		codeHelper = new OAuthCodeHelperImpl();
 	}
 
+	/**
+	 * Gets all declared Methods of class c.
+	 * @param c The class which extends OAuthServlet.
+	 */
 	private void getAllDeclaredMethods(Class<? extends OAuthServlet> c) {
 
 		Class<?> clazz = c;
@@ -127,14 +140,22 @@ public abstract class OAuthServlet extends HttpServlet {
 		this.allowedMethods = allow.toString();
 	}
 	
+	/** Gets the Authorization Header from request and retrieves the corresponding OAuthInfo.
+	 * @param req The request.
+	 * @return The OAuthInfo for this request.
+	 */
 	private OAuthInfo getOAuthInfo(HttpServletRequest req) {
 		return codeHelper.getOAuthInfo(req.getHeader("Authorization"));
 	}
 
+	/** Sets allowed origin for CORS to *.
+	 * @param resp
+	 */
 	protected void setCORS(HttpServletResponse resp) {
 		resp.setHeader("Access-Control-Allow-Origin", "*");
 	}
 
+	@Override
 	protected void doOptions(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		resp.setHeader("Allow", this.allowedMethods);
 		setCORS(resp);
@@ -157,6 +178,13 @@ public abstract class OAuthServlet extends HttpServlet {
 		doGet(req, resp, info);
 	}
 
+	/** Will be called after a doGet(HttpServletRequest req, HttpServletResponse resp) ONLY if doDelete(HttpServletRequest req, HttpServletResponse resp) was not overwritten! Override this function to handle GET request.
+	 * @param req The request.
+	 * @param resp The response.
+	 * @param info The OAuthInfo about the request.
+	 * @throws ServletException
+	 * @throws IOException
+	 */
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp, OAuthInfo info) throws ServletException, IOException {
 
 	}
@@ -176,6 +204,13 @@ public abstract class OAuthServlet extends HttpServlet {
 		doPost(req, resp, info);
 	}
 	
+	/** Will be called after a doPost(HttpServletRequest req, HttpServletResponse resp) ONLY if doDelete(HttpServletRequest req, HttpServletResponse resp) was not overwritten! Override this function to handle POST request.
+	 * @param req The request.
+	 * @param resp The request.
+	 * @param info The OAuthInfo about the request.
+	 * @throws ServletException
+	 * @throws IOException
+	 */
 	protected void doPost(HttpServletRequest req, HttpServletResponse resp, OAuthInfo info) throws ServletException, IOException {
 		
 	}
@@ -195,6 +230,13 @@ public abstract class OAuthServlet extends HttpServlet {
 		doPut(req, resp, info);
 	}
 	
+	/** Will be called after a doPut(HttpServletRequest req, HttpServletResponse resp) ONLY if doDelete(HttpServletRequest req, HttpServletResponse resp) was not overwritten! Override this function to handle PUT request.
+	 * @param req The request.
+	 * @param resp The request.
+	 * @param info The OAuthInfo about the request.
+	 * @throws ServletException
+	 * @throws IOException
+	 */
 	protected void doPut(HttpServletRequest req, HttpServletResponse resp, OAuthInfo info) throws ServletException, IOException {
 		
 	}
@@ -214,6 +256,13 @@ public abstract class OAuthServlet extends HttpServlet {
 		doDelete(req, resp, info);
 	}
 	
+	/** Will be called after a doDelete(HttpServletRequest req, HttpServletResponse resp) ONLY if doDelete(HttpServletRequest req, HttpServletResponse resp) was not overwritten! Override this function to handle DELETE request.
+	 * @param req The request.
+	 * @param resp The request.
+	 * @param info The OAuthInfo about the request.
+	 * @throws ServletException
+	 * @throws IOException
+	 */
 	protected void doDelete(HttpServletRequest req, HttpServletResponse resp, OAuthInfo info) throws ServletException, IOException {
 		
 	}

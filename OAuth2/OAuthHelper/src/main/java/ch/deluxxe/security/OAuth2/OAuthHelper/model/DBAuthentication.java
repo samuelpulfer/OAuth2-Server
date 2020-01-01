@@ -16,12 +16,20 @@ import javax.sql.DataSource;
 import ch.deluxxe.security.OAuth2.OAuthHelper.model.iface.Authentication;
 
 
+/**
+ * @author Samuel Pulfer
+ * Implementation of Authentication against a DB.
+ * Requires a Database connection defined as "java:comp/env/jdbc/oauthdb"
+ */
 public class DBAuthentication implements Authentication {
 	
 	private static final char[] HEX_ARRAY = "0123456789ABCDEF".toCharArray();
 	
 	private DataSource ds;
 	
+	/**
+	 * Initials DataSource
+	 */
 	public DBAuthentication() {
 		try {
 			Context ctx = new InitialContext();
@@ -83,6 +91,11 @@ public class DBAuthentication implements Authentication {
 		return false;
 	}
 	
+	/**
+	 * Converts a byte array to string.
+	 * @param bytes The byte array.
+	 * @return A string from the byte array.
+	 */
 	private String bytesToHex(byte[] bytes) {
 	    char[] hexChars = new char[bytes.length * 2];
 	    for (int j = 0; j < bytes.length; j++) {

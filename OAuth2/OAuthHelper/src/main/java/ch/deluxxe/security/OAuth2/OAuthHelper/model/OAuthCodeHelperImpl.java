@@ -23,13 +23,25 @@ import ch.deluxxe.security.OAuth2.OAuthHelper.model.iface.OAuthCodeHelper;
 import ch.deluxxe.security.OAuth2.OAuthHelper.view.iface.OAuthInfo;
 
 
+/** An implementation of OAuthCodeHelper to generate bearer token.
+ * Requires a Database connection defined as "java:comp/env/jdbc/oauthdb"
+ * @author Samuel Pulfer
+ *
+ */
 public class OAuthCodeHelperImpl implements OAuthCodeHelper {
 	
+	/**
+	 * A lookup table for all usable characters in token.
+	 */
 	final static char[] chars = {'a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z',
 								'A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z',
 								'0','1','2','3','4','5','6','7','8','9'
 								};
 	
+	/** An implementation of OAuthCodePair
+	 * @author Samuel Pulfer
+	 *
+	 */
 	private class OAuthCodePairImpl implements OAuthCodePair {
 
 		private String accessCode = null;
@@ -41,9 +53,15 @@ public class OAuthCodeHelperImpl implements OAuthCodeHelper {
 			accessCode = codeGenerator();
 			refreshCode = codeGenerator();
 		}
+		/** Sets the secret to sign the token.
+		 * @param secret
+		 */
 		public void setSecret(String secret) {
 			this.secret = secret;
 		}
+		/** Sets the username for the token.
+		 * @param username
+		 */
 		public void setUsername(String username) {
 			this.username = username;
 		}
@@ -80,6 +98,10 @@ public class OAuthCodeHelperImpl implements OAuthCodeHelper {
 		
 	}
 	
+	/** Implements a OAuthInfo
+	 * @author Samuel Pulfer
+	 *
+	 */
 	private class OAuthInfoImpl implements OAuthInfo {
 
 		private String application = null;
@@ -87,6 +109,12 @@ public class OAuthCodeHelperImpl implements OAuthCodeHelper {
 		private String username = null;
 		private String accessCode = null;
 		
+		/** Constructs the OAuthInfoImpl
+		 * @param application The application
+		 * @param role The role
+		 * @param username The username
+		 * @param accessCode The access code.
+		 */
 		public OAuthInfoImpl(String application, String role, String username, String accessCode) {
 			this.application = application;
 			this.role = role;
@@ -119,6 +147,9 @@ public class OAuthCodeHelperImpl implements OAuthCodeHelper {
 	private DataSource ds;
 	private JWTHelper jwt = null;
 	
+	/**
+	 * Initials DataSource
+	 */
 	public OAuthCodeHelperImpl() {
 		try {
 			Context ctx = new InitialContext();
@@ -290,6 +321,9 @@ public class OAuthCodeHelperImpl implements OAuthCodeHelper {
 		return null;
 	}
 	
+	/** Generates a 27 character long random code.
+	 * @return The 27 character long random code.
+	 */
 	private String codeGenerator() {
 		StringBuilder code = new StringBuilder();
 		code.append(UUID.randomUUID());

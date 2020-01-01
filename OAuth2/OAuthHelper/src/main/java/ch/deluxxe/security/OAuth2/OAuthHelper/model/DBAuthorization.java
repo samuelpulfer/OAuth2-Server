@@ -12,10 +12,19 @@ import javax.sql.DataSource;
 import ch.deluxxe.security.OAuth2.OAuthHelper.model.iface.Authorization;
 
 
+/**
+ * Implements an Authorization against a DB.
+ * Requires a Database connection defined as "java:comp/env/jdbc/oauthdb"
+ * @author Samuel Pulfer
+ *
+ */
 public class DBAuthorization implements Authorization {
 	
 	private DataSource ds;
 	
+	/**
+	 * Initials DataSource
+	 */
 	public DBAuthorization() {
 		try {
 			Context ctx = new InitialContext();
