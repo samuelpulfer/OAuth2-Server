@@ -46,7 +46,7 @@
 		<dependency>
 			<groupId>ch.deluxxe.security.OAuth2</groupId>
 			<artifactId>OAuthHelper</artifactId>
-			<version>0.0.1-SNAPSHOT</version>
+			<version>0.0.1</version>
 		</dependency>
 		<dependency>
 			<groupId>com.vaadin</groupId>
