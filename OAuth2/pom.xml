@@ -6,7 +6,7 @@
 
 	<groupId>ch.deluxxe.security</groupId>
 	<artifactId>OAuth2</artifactId>
-	<version>0.0.2-SNAPSHOT</version>
+	<version>0.0.2</version>
 	<packaging>pom</packaging>
 
 	<name>OAuth2</name>
