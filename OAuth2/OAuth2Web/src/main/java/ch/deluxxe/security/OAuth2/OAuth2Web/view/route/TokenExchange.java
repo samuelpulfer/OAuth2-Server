@@ -55,7 +55,12 @@ public class TokenExchange extends OAuthServlet {
 		System.out.println(redirectUri);
 		String clientId = request.getParameter("client_id");
 		System.out.println(clientId);
-		String code = request.getParameter("code");
+		String code = null;
+		if(grantType == GrantType.authorization_code) {
+			code = request.getParameter("code");
+		} else if(grantType == GrantType.refresh_token) {
+			code = request.getParameter("refresh_token");
+		} 
 		System.out.println(code);
 		
 		OAuthCodePair pair = codeHelper.getToken(code, grantType);
