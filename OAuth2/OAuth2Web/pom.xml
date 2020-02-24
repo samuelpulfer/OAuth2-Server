@@ -7,7 +7,7 @@
 	<parent>
 		<groupId>ch.deluxxe.security</groupId>
 		<artifactId>OAuth2</artifactId>
-		<version>0.0.1</version>
+		<version>0.0.2</version>
 	</parent>
 
 	<groupId>ch.deluxxe.security.OAuth2</groupId>
@@ -46,7 +46,7 @@
 		<dependency>
 			<groupId>ch.deluxxe.security.OAuth2</groupId>
 			<artifactId>OAuthHelper</artifactId>
-			<version>0.0.1</version>
+			<version>0.0.2</version>
 		</dependency>
 		<dependency>
 			<groupId>com.vaadin</groupId>
