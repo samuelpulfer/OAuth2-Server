@@ -18,6 +18,10 @@ public interface OAuthInfo {
 	 * @return The username.
 	 */
 	public String getUsername();
+	/** Gets the user id.
+	 * @return the user id.
+	 */
+	public int getUserid();
 	/** Gets the access code.
 	 * @return the access code.
 	 */

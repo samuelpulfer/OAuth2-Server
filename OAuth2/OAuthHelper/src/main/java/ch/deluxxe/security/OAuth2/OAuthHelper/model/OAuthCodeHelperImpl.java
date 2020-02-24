@@ -107,18 +107,21 @@ public class OAuthCodeHelperImpl implements OAuthCodeHelper {
 		private String application = null;
 		private String role = null;
 		private String username = null;
+		private int userid = 0;
 		private String accessCode = null;
 		
 		/** Constructs the OAuthInfoImpl
 		 * @param application The application
 		 * @param role The role
 		 * @param username The username
+		 * @param userid The user id
 		 * @param accessCode The access code.
 		 */
-		public OAuthInfoImpl(String application, String role, String username, String accessCode) {
+		public OAuthInfoImpl(String application, String role, String username, int userid, String accessCode) {
 			this.application = application;
 			this.role = role;
 			this.username = username;
+			this.userid = userid;
 			this.accessCode = accessCode;
 		}
 		
@@ -140,6 +143,11 @@ public class OAuthCodeHelperImpl implements OAuthCodeHelper {
 		@Override
 		public String getUsername() {
 			return username;
+		}
+
+		@Override
+		public int getUserid() {
+			return userid;
 		}
 		
 	}
@@ -413,11 +421,11 @@ public class OAuthCodeHelperImpl implements OAuthCodeHelper {
 		ResultSet rs = null;
 		try {
 			conn = ds.getConnection();
-			ps = conn.prepareStatement("SELECT appname,rolename,username FROM v_accesstoken WHERE accesstoken=? AND expiration > CURRENT_TIMESTAMP");
+			ps = conn.prepareStatement("SELECT appname,rolename,username,userid FROM v_accesstoken WHERE accesstoken=? AND expiration > CURRENT_TIMESTAMP");
 			ps.setString(1, jti);
 			rs = ps.executeQuery();
 			if(rs.next()) {
-				info = new OAuthInfoImpl(rs.getString("appname"), rs.getString("rolename"), rs.getString("username"), jti);
+				info = new OAuthInfoImpl(rs.getString("appname"), rs.getString("rolename"), rs.getString("username"), rs.getInt("userid"), jti);
 			}
 		} catch (SQLException e) {
 			System.out.println("SQL Exception: " + e.getMessage());
