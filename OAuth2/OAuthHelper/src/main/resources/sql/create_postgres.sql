@@ -81,7 +81,7 @@ CREATE VIEW v_roles AS (
 	WHERE nn_users_roles.deleted IS NULL
 );
 CREATE VIEW v_authcode AS (
-	SELECT application.appname, application.secret, roles.rolename, users.username, authcode.authcode, authcode.expiration, authcode.redeemed
+	SELECT application.appname, application.secret, roles.rolename, users.username, users.id AS userid, authcode.authcode, authcode.expiration, authcode.redeemed
 	FROM authcode
 	LEFT JOIN nn_users_roles ON(authcode.fk_nn_users_roles = nn_users_roles.id)
 	LEFT JOIN roles ON(nn_users_roles.fk_roles = roles.id)
@@ -95,12 +95,12 @@ CREATE VIEW v_refreshtoken AS (
 	LEFT JOIN v_authcode ON(refreshtoken.fk_authcode = v_authcode.authcode)
 );
 CREATE VIEW v_accesstoken AS (
-	SELECT v_authcode.appname, v_authcode.secret, v_authcode.rolename, v_authcode.username, v_authcode.authcode, accesstoken.accesstoken, accesstoken.expiration
+	SELECT v_authcode.appname, v_authcode.secret, v_authcode.rolename, v_authcode.username, v_authcode.userid, v_authcode.authcode, accesstoken.accesstoken, accesstoken.expiration
 	FROM accesstoken
 	LEFT JOIN v_authcode ON(accesstoken.fk_authcode = v_authcode.authcode)
 );
 CREATE VIEW v_userinfo AS (
-	SELECT accesstoken.accesstoken, roles.rolename, users.username, users.firstname, users.surname, users.email
+	SELECT accesstoken.accesstoken, roles.rolename, users.username, users.id AS userid, users.firstname, users.surname, users.email
 	FROM accesstoken
 	LEFT JOIN authcode ON(accesstoken.fk_authcode = authcode.authcode)
 	LEFT JOIN nn_users_roles ON(authcode.fk_nn_users_roles = nn_users_roles.id)
