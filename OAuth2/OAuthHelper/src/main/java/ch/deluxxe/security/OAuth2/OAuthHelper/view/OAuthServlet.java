@@ -160,7 +160,7 @@ public abstract class OAuthServlet extends HttpServlet {
 		resp.setHeader("Allow", this.allowedMethods);
 		setCORS(resp);
 		resp.setHeader("Access-Control-Allow-Methods", this.allowedMethods);
-		resp.setHeader("Access-Control-Allow-Headers", "Accept, Authorization");
+		resp.setHeader("Access-Control-Allow-Headers", "Accept, Authorization, Content-Type");
 	}
 
 	@Override
